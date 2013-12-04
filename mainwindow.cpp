@@ -1,14 +1,15 @@
+#include "Dialogs/Preference/preferencedialog.h"
 #include "mainwindow.h"
-#include <QtWidgets>
+#include <QtWidgets> // иначе не работет qApp
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
 {
     readSettings();
-
+    setLanguage();
     createActions();
     createMenu();
-    retranslate();
+    retranslate(language);
 }
 
 MainWindow::~MainWindow()
@@ -26,6 +27,9 @@ void MainWindow::createActions()
     exitAct->setShortcut(QKeySequence(Qt::CTRL + Qt::Key_Q));
     exitAct->setStatusTip(tr("Exit the application"));
     connect(exitAct, SIGNAL(triggered()), qApp, SLOT(closeAllWindows()));
+
+    preferenceAct = new QAction(this);
+    connect(preferenceAct, SIGNAL(triggered()), this, SLOT(preference()));
 }
 
 void MainWindow::createMenu()
@@ -36,7 +40,9 @@ void MainWindow::createMenu()
     editMenu    = new QMenu(this);
     viewMenu    = new QMenu(this);
     windowMenu  = new QMenu(this);
+
     serviceMenu = new QMenu(this);
+    serviceMenu ->addAction(preferenceAct);
 
     helpMenu    = new QMenu(this);
     helpMenu    ->addAction(aboutQtAct);
@@ -49,18 +55,31 @@ void MainWindow::createMenu()
     menuBar()->addMenu(helpMenu);
 }
 
+void MainWindow::preference()
+{
+    PreferenceDialog dialog; //диалог насройка приложения слот
+    dialog.setLanguageCombo(language);
+    dialog.exec();
+
+    if(dialog.locale != "")language = dialog.locale;
+    retranslate(language);
+
+}
+
 void MainWindow::readSettings()
 {
     QSettings settings("QtProject", "MC1");
     QSize size = settings.value("/size",sizeHint()).toSize();
     if(size.isNull()) resize(650,450);
     resize(size);
+    language = settings.value("/Settings/language","").toString();
 }
 
-void MainWindow::retranslate()
+void MainWindow::retranslate(QString lang)
 {
     aboutQtAct      ->setText(tr("About &Qt"));
     exitAct     ->setText(tr("Exit"));
+    preferenceAct   ->setText(tr("Preference..."));
 
     mainMenu    ->setTitle(tr("Main"));
     editMenu    ->setTitle(tr("Edit"));
@@ -68,10 +87,22 @@ void MainWindow::retranslate()
     windowMenu  ->setTitle(tr("Window"));
     serviceMenu ->setTitle(tr("Service"));
     helpMenu    ->setTitle(tr("Help"));
+
+    qtTranslator.load("qt_"+lang, "/home/roman/MC1/translations");
+    qApp->installTranslator(&qtTranslator);
+}
+
+void MainWindow::setLanguage()
+{//спользуем эту функцию для начального задания языка приложения
+    if (language == tr("")) {
+        language = QLocale::system().name();
+        language.chop(3);
+    }
 }
 
 void MainWindow::writeSettings()
 {
     QSettings settings("QtProject", "MC1");
     settings.setValue("/size",size());
+    settings.setValue("/Settings/language", language);
 }

@@ -13,9 +13,13 @@ TEMPLATE = app
 
 
 SOURCES += main.cpp\
-        mainwindow.cpp
+        mainwindow.cpp \
+    Dialogs/Preference/preferencedialog.cpp \
+    Dialogs/Preference/pages.cpp
 
-HEADERS  += mainwindow.h
+HEADERS  += mainwindow.h \
+    Dialogs/Preference/preferencedialog.h \
+    Dialogs/Preference/pages.h
 
 RESOURCES += \
     mc1.qrc

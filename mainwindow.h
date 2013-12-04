@@ -4,6 +4,7 @@
 #include <QMainWindow>
 #include <QMenu>
 #include <QMenuBar>
+#include <QTranslator>
 
 class MainWindow : public QMainWindow
 {
@@ -12,15 +13,21 @@ class MainWindow : public QMainWindow
 public:
     MainWindow(QWidget *parent = 0);
     ~MainWindow();
+
+public slots:
+    void preference();
+
 private:
     void createActions();
     void createMenu();
     void readSettings();
-    void retranslate();
+    void retranslate(QString lang);
+    void setLanguage();
     void writeSettings();
 
     QAction     *aboutQtAct;
     QAction     *exitAct;
+    QAction     *preferenceAct;
 
     QMenu *mainMenu;
     QMenu *editMenu;
@@ -28,6 +35,9 @@ private:
     QMenu *windowMenu;
     QMenu *serviceMenu;
     QMenu *helpMenu;
+
+    QTranslator qtTranslator;
+    QString language;
 };
 
 #endif // MAINWINDOW_H
