@@ -6,6 +6,8 @@
 #include <QMenuBar>
 #include <QTranslator>
 
+class QDir;
+
 class MainWindow : public QMainWindow
 {
     Q_OBJECT
@@ -20,6 +22,7 @@ public slots:
 private:
     void createActions();
     void createMenu();
+    QDir directoryOf(const QString &subdir);
     void readSettings();
     void retranslate(QString lang);
     void setLanguage();

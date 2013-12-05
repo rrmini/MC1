@@ -55,6 +55,25 @@ void MainWindow::createMenu()
     menuBar()->addMenu(helpMenu);
 }
 
+QDir MainWindow::directoryOf(const QString &subdir)
+{
+    QDir dir(QApplication::applicationDirPath());
+
+#if defined(Q_OS_WIN)
+    if (dir.dirName.toLower() == "debug"
+            || dirName().toLower() == "release")
+        dir.cdUp();
+#elif defined(Q_OS_MAC)
+    if (dir.dirName() == "MacOS") {
+        dir.cdUp();
+        dir.cdUp();
+        dir.cdUp();
+    }
+#endif
+    dir.cd(subdir);
+    return dir;
+}
+
 void MainWindow::preference()
 {
     PreferenceDialog dialog; //диалог насройка приложения слот
@@ -88,7 +107,8 @@ void MainWindow::retranslate(QString lang)
     serviceMenu ->setTitle(tr("Service"));
     helpMenu    ->setTitle(tr("Help"));
 
-    qtTranslator.load("qt_"+lang, "/home/roman/MC1/translations");
+    QString qmPath = directoryOf("translations").absolutePath();
+    qtTranslator.load("qt_"+lang, qmPath);
     qApp->installTranslator(&qtTranslator);
 }
 
