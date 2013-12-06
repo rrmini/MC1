@@ -1,3 +1,4 @@
+#include "Dialogs/databaseconnectiondialog.h"
 #include "Dialogs/Preference/preferencedialog.h"
 #include "mainwindow.h"
 #include <QtWidgets> // иначе не работет qApp
@@ -19,6 +20,12 @@ MainWindow::~MainWindow()
 
 void MainWindow::createActions()
 {
+    dbConnectionAct = new QAction(this);
+    dbConnectionAct->setShortcut(QKeySequence(Qt::CTRL + Qt::Key_N));
+    dbConnectionAct->setIcon(QIcon(":/images/disconnect32.png"));
+    dbConnectionAct->setStatusTip(tr("database connection"));
+    connect(dbConnectionAct, SIGNAL(triggered()), this, SLOT(dbConnection()));
+
     aboutQtAct = new QAction(this);
     connect(aboutQtAct, SIGNAL(triggered()), qApp, SLOT(aboutQt()));
 
@@ -35,6 +42,7 @@ void MainWindow::createActions()
 void MainWindow::createMenu()
 {
     mainMenu    = new QMenu(this);
+    mainMenu    ->addAction(dbConnectionAct);
     mainMenu    ->addAction(exitAct);
 
     editMenu    = new QMenu(this);
@@ -53,6 +61,13 @@ void MainWindow::createMenu()
     menuBar()->addMenu(windowMenu);
     menuBar()->addMenu(serviceMenu);
     menuBar()->addMenu(helpMenu);
+}
+
+void MainWindow::dbConnection()
+{
+    DatabaseConnectionDialog *dialog = new DatabaseConnectionDialog(this);
+    dialog->exec();
+//    QMessageBox::warning(this, tr(""),"void dbConnection();");
 }
 
 QDir MainWindow::directoryOf(const QString &subdir)
@@ -97,7 +112,8 @@ void MainWindow::readSettings()
 void MainWindow::retranslate(QString lang)
 {
     aboutQtAct      ->setText(tr("About &Qt"));
-    exitAct     ->setText(tr("Exit"));
+    dbConnectionAct ->setText(tr("Connection"));
+    exitAct         ->setText(tr("Exit"));
     preferenceAct   ->setText(tr("Preference..."));
 
     mainMenu    ->setTitle(tr("Main"));

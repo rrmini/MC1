@@ -17,6 +17,7 @@ public:
     ~MainWindow();
 
 public slots:
+    void dbConnection();
     void preference();
 
 private:
@@ -29,6 +30,7 @@ private:
     void writeSettings();
 
     QAction     *aboutQtAct;
+    QAction     *dbConnectionAct;
     QAction     *exitAct;
     QAction     *preferenceAct;
 

@@ -4,7 +4,7 @@
 #
 #-------------------------------------------------
 
-QT       += core gui
+QT       += core gui sql
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
@@ -15,11 +15,13 @@ TEMPLATE = app
 SOURCES += main.cpp\
         mainwindow.cpp \
     Dialogs/Preference/preferencedialog.cpp \
-    Dialogs/Preference/pages.cpp
+    Dialogs/Preference/pages.cpp \
+    Dialogs/databaseconnectiondialog.cpp
 
 HEADERS  += mainwindow.h \
     Dialogs/Preference/preferencedialog.h \
-    Dialogs/Preference/pages.h
+    Dialogs/Preference/pages.h \
+    Dialogs/databaseconnectiondialog.h
 
 RESOURCES += \
     mc1.qrc
