@@ -269,6 +269,11 @@ const QString DatabaseConnectionDialog::dbName(){
     return editDatabaseName->text();
 }
 
+const QString DatabaseConnectionDialog::driverName()
+{
+    return comboDatabaseDriverName->currentText();
+}
+
 const QString DatabaseConnectionDialog::hostName(){
     return editDatabaseHostName->text();
 }

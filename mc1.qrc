@@ -3,5 +3,6 @@
         <file>images/exit32.png</file>
         <file>images/config.png</file>
         <file>images/disconnect32.png</file>
+        <file>images/connectDB32_32.png</file>
     </qresource>
 </RCC>

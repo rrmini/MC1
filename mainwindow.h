@@ -7,6 +7,7 @@
 #include <QTranslator>
 
 class QDir;
+class ConnectionWidget;
 
 class MainWindow : public QMainWindow
 {
@@ -22,12 +23,16 @@ public slots:
 
 private:
     void createActions();
+    void createDockWidget();
     void createMenu();
     QDir directoryOf(const QString &subdir);
     void readSettings();
     void retranslate(QString lang);
+    void setIcon();
     void setLanguage();
     void writeSettings();
+
+    ConnectionWidget *connWidget;
 
     QAction     *aboutQtAct;
     QAction     *dbConnectionAct;
@@ -42,7 +47,12 @@ private:
     QMenu *helpMenu;
 
     QTranslator qtTranslator;
-    QString language;
+    QString     dbName;
+    QString     driverName;
+    QString     hostName;
+    int         portNumber;
+    QString     userName;
+    QString     language;
 };
 
 #endif // MAINWINDOW_H

@@ -1,5 +1,6 @@
 #include "Dialogs/databaseconnectiondialog.h"
 #include "Dialogs/Preference/preferencedialog.h"
+#include "connectionwidget.h"
 #include "mainwindow.h"
 #include <QtWidgets> // иначе не работет qApp
 
@@ -10,6 +11,7 @@ MainWindow::MainWindow(QWidget *parent)
     setLanguage();
     createActions();
     createMenu();
+    createDockWidget();
     retranslate(language);
 }
 
@@ -39,6 +41,16 @@ void MainWindow::createActions()
     connect(preferenceAct, SIGNAL(triggered()), this, SLOT(preference()));
 }
 
+void MainWindow::createDockWidget()
+{
+    QDockWidget *dock = new QDockWidget(tr("Customers"), this);
+    dock->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
+    viewMenu->addAction(dock->toggleViewAction());
+    connWidget = new ConnectionWidget(this);
+    dock->setWidget(connWidget);
+    addDockWidget(Qt::RightDockWidgetArea, dock);
+}
+
 void MainWindow::createMenu()
 {
     mainMenu    = new QMenu(this);
@@ -66,8 +78,25 @@ void MainWindow::createMenu()
 void MainWindow::dbConnection()
 {
     DatabaseConnectionDialog *dialog = new DatabaseConnectionDialog(this);
+    dialog->setDatabaseDriverName(driverName);
+    dialog->setDatabaseHostName(hostName);
+    dialog->setDatabasePortNumber(portNumber);
+    dialog->setDatabaseName(dbName);
+    dialog->setDatabaseUsername(userName);
     dialog->exec();
-//    QMessageBox::warning(this, tr(""),"void dbConnection();");
+
+    driverName  = dialog->driverName();
+    hostName    = dialog->hostName();
+    portNumber  = dialog->portNumber();
+    dbName      = dialog->dbName();
+    userName    = dialog->userName();
+
+    setIcon();
+//    QStringList names = QSqlDatabase::connectionNames();
+//    if(!names.isEmpty()){
+//        QMessageBox::warning(this,tr("dbConnection"), tr("есть активные соединения"));
+//        dbConnectionAct->setIcon(QIcon(":/images/connectDB32_32.png"));
+//    }
 }
 
 QDir MainWindow::directoryOf(const QString &subdir)
@@ -107,6 +136,11 @@ void MainWindow::readSettings()
     if(size.isNull()) resize(650,450);
     resize(size);
     language = settings.value("/Settings/language","").toString();
+    driverName = settings.value("/Settings/driverName", "").toString();
+    hostName    = settings.value("/Settings/hostName","").toString();
+    portNumber  = settings.value("/Settings/portNumber",3306).toInt();
+    dbName      = settings.value("/Settings/dbName","").toString();
+    userName    = settings.value("/Settings/userName","").toString();
 }
 
 void MainWindow::retranslate(QString lang)
@@ -128,6 +162,13 @@ void MainWindow::retranslate(QString lang)
     qApp->installTranslator(&qtTranslator);
 }
 
+void MainWindow::setIcon()
+{
+    QStringList names = QSqlDatabase::connectionNames();
+    if(!names.isEmpty()) dbConnectionAct->setIcon(QIcon(":/images/connectDB32_32.png"));
+    else dbConnectionAct->setIcon(QIcon(":/images/disconnect32.png"));
+}
+
 void MainWindow::setLanguage()
 {//спользуем эту функцию для начального задания языка приложения
     if (language == tr("")) {
@@ -141,4 +182,9 @@ void MainWindow::writeSettings()
     QSettings settings("QtProject", "MC1");
     settings.setValue("/size",size());
     settings.setValue("/Settings/language", language);
+    settings.setValue("/Settings/driverName", driverName);
+    settings.setValue("/Settings/hostName", hostName);
+    settings.setValue("/Settings/portNumber", portNumber);
+    settings.setValue("/Settings/dbName", dbName);
+    settings.setValue("/Settings/userName", userName);
 }

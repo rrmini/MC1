@@ -19,6 +19,7 @@ public:
     void setDatabaseDriverName( const QString& drvName );
     int portNumber();
     const QString dbName();
+    const QString driverName();
     const QString hostName();
     const QString userName();
 
