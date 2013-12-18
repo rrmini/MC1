@@ -17,13 +17,15 @@ SOURCES += main.cpp\
     Dialogs/Preference/preferencedialog.cpp \
     Dialogs/Preference/pages.cpp \
     Dialogs/databaseconnectiondialog.cpp \
-    connectionwidget.cpp
+    connectionwidget.cpp \
+    mdichild.cpp
 
 HEADERS  += mainwindow.h \
     Dialogs/Preference/preferencedialog.h \
     Dialogs/Preference/pages.h \
     Dialogs/databaseconnectiondialog.h \
-    connectionwidget.h
+    connectionwidget.h \
+    mdichild.h
 
 RESOURCES += \
     mc1.qrc

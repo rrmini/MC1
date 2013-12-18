@@ -131,20 +131,22 @@ void DatabaseConnectionDialog::doDatabaseConnection()
     }
 //    qDebug() << "Performing the database driver setup..";
     QStringList names = QSqlDatabase::connectionNames();
-    QString connectionName = comboDatabaseDriverName->currentText() + "://" +
+    QString name = comboDatabaseDriverName->currentText() + "://" +
             editDatabaseUsername->text() + "@" + editDatabaseHostName->text()
             + "." +  editDatabaseName->text() ;
-
+    setConnectionName(name);
     for (int i=0; i<names.size(); i++){
-        if(names[i] == connectionName && QSqlDatabase::database(names[i]).isOpen())
+        if(names[i] == name && QSqlDatabase::database(names[i]).isOpen())
         {
             QMessageBox::warning(this,tr(""),tr("такое соединение уже есть!"));
             return;
         }
+
     }
+
     // set database driver properties
     QSqlDatabase databaseConnection = QSqlDatabase::addDatabase(comboDatabaseDriverName->currentText(),
-                                                                connectionName);
+                                                                name);
     databaseConnection.setDatabaseName( editDatabaseName->text() );
     databaseConnection.setUserName( editDatabaseUsername->text() );
     databaseConnection.setHostName( editDatabaseHostName->text() );
@@ -160,9 +162,10 @@ void DatabaseConnectionDialog::doDatabaseConnection()
         // on the first field
         buttons->button( QDialogButtonBox::Ok )->setEnabled( false );
         editDatabaseHostName->setFocus();
-        databaseConnection.removeDatabase(connectionName);
+        databaseConnection.removeDatabase(name);
     }
     else{
+
         this->hide();
 //        // emit the signal
 //        qDebug() << "Emitting signal since the database is connected!";
@@ -234,6 +237,11 @@ void DatabaseConnectionDialog::slotPerformConnection()
 
 }
 
+void DatabaseConnectionDialog::setConnectionName(const QString &str)
+{
+    connectionName = str;
+}
+
 void DatabaseConnectionDialog::setDatabaseName(const QString &dbName)
 {
     editDatabaseName->setText( dbName );
@@ -263,6 +271,11 @@ void DatabaseConnectionDialog::setDatabaseDriverName(const QString &drvName)
 
 int DatabaseConnectionDialog::portNumber(){
     return spinBoxDatabasePort->value();
+}
+
+const QString DatabaseConnectionDialog::connectName()
+{
+    return connectionName;
 }
 
 const QString DatabaseConnectionDialog::dbName(){

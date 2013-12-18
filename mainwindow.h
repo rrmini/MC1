@@ -8,6 +8,9 @@
 
 class QDir;
 class ConnectionWidget;
+class QMdiArea;
+class MdiChild;
+class QMdiSubWindow;
 
 class MainWindow : public QMainWindow
 {
@@ -24,13 +27,17 @@ public slots:
 private:
     void createActions();
     void createDockWidget();
+    MdiChild *createMdiChild();
     void createMenu();
     QDir directoryOf(const QString &subdir);
+    void openMdiChild(const QString &connectionName);
     void readSettings();
     void retranslate(QString lang);
     void setIcon();
     void setLanguage();
     void writeSettings();
+
+    QMdiSubWindow *findMdiChild(const QString &windowObjectName);
 
     ConnectionWidget *connWidget;
 
@@ -39,6 +46,7 @@ private:
     QAction     *exitAct;
     QAction     *preferenceAct;
 
+    QMdiArea    *mdiArea;
     QMenu *mainMenu;
     QMenu *editMenu;
     QMenu *viewMenu;

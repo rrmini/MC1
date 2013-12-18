@@ -18,6 +18,7 @@ public:
     void setDatabaseUsername( const QString& username );
     void setDatabaseDriverName( const QString& drvName );
     int portNumber();
+    const QString connectName();
     const QString dbName();
     const QString driverName();
     const QString hostName();
@@ -52,12 +53,15 @@ private:
 
     QSpinBox* spinBoxDatabasePort;
 
+    QString connectionName;
+
     bool checkFormData();
     void createGridGroupBox();
     void createUrlGroupBox();
     void createWidgets();
     void doDatabaseConnection();
     void findAvailableDrivers();
+    void setConnectionName(const QString& str);
     void setUpGUI();
 };
 

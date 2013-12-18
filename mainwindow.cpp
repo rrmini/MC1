@@ -2,11 +2,17 @@
 #include "Dialogs/Preference/preferencedialog.h"
 #include "connectionwidget.h"
 #include "mainwindow.h"
+#include "mdichild.h"
 #include <QtWidgets> // иначе не работет qApp
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
 {
+    mdiArea = new QMdiArea;
+    mdiArea->setHorizontalScrollBarPolicy(Qt::ScrollBarAsNeeded);
+    mdiArea->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
+    setCentralWidget(mdiArea);
+
     readSettings();
     setLanguage();
     createActions();
@@ -51,6 +57,22 @@ void MainWindow::createDockWidget()
     addDockWidget(Qt::RightDockWidgetArea, dock);
 }
 
+MdiChild *MainWindow::createMdiChild()
+{
+    MdiChild *child = new MdiChild;
+//    child->setModel();
+    mdiArea->addSubWindow(child);
+
+#ifndef QT_NO_CLIPBOARD
+//    connect(child, SIGNAL(copyAvailable(bool)),
+//            cutAct, SLOT(setEnabled(bool)));
+//    connect(child, SIGNAL(copyAvailable(bool)),
+//            copyAct, SLOT(setEnabled(bool)));
+#endif
+
+    return child;
+}
+
 void MainWindow::createMenu()
 {
     mainMenu    = new QMenu(this);
@@ -92,11 +114,11 @@ void MainWindow::dbConnection()
     userName    = dialog->userName();
 
     setIcon();
-//    QStringList names = QSqlDatabase::connectionNames();
-//    if(!names.isEmpty()){
-//        QMessageBox::warning(this,tr("dbConnection"), tr("есть активные соединения"));
-//        dbConnectionAct->setIcon(QIcon(":/images/connectDB32_32.png"));
-//    }
+    QString nameDB = dialog->connectName();
+    if(QSqlDatabase::database(nameDB).isOpen())
+    openMdiChild(nameDB);
+//        QMessageBox::warning(this,tr("dbConnection"), nameDB);
+
 }
 
 QDir MainWindow::directoryOf(const QString &subdir)
@@ -116,6 +138,30 @@ QDir MainWindow::directoryOf(const QString &subdir)
 #endif
     dir.cd(subdir);
     return dir;
+}
+
+QMdiSubWindow *MainWindow::findMdiChild(const QString &windowObjectName)
+{
+    foreach (QMdiSubWindow *window, mdiArea->subWindowList()) {
+        MdiChild *mdiChild = qobject_cast<MdiChild *>(window->widget());
+        if (mdiChild->objectName() == windowObjectName)
+            return window;
+    }
+    return 0;
+}
+
+void MainWindow::openMdiChild(const QString &connectionName)
+{
+    QMdiSubWindow *existing = findMdiChild(connectionName);
+    if (existing) {
+        mdiArea->setActiveSubWindow(existing);
+        return;
+    }
+
+    MdiChild *child = createMdiChild();
+    child->setObjectName(connectionName);
+    child->setWindowTitle(connectionName);
+    child->show();
 }
 
 void MainWindow::preference()
