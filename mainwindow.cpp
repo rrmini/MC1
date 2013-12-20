@@ -5,20 +5,28 @@
 #include "mdichild.h"
 #include <QtWidgets> // иначе не работет qApp
 
-MainWindow::MainWindow(QWidget *parent)
-    : QMainWindow(parent)
+MainWindow::MainWindow()
+
 {
     mdiArea = new QMdiArea;
     mdiArea->setHorizontalScrollBarPolicy(Qt::ScrollBarAsNeeded);
     mdiArea->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
     setCentralWidget(mdiArea);
+    connect(mdiArea, SIGNAL(subWindowActivated(QMdiSubWindow*)),
+            this, SLOT(updateMenus()));
+
+    windowMapper = new QSignalMapper(this);
+    connect(windowMapper, SIGNAL(mapped(QWidget*)),
+                this, SLOT(setActiveSubWindow(QWidget*)));
 
     readSettings();
     setLanguage();
     createActions();
     createMenu();
+    updateMenus();
     createDockWidget();
     retranslate(language);
+    setUnifiedTitleAndToolBarOnMac(true);
 }
 
 MainWindow::~MainWindow()
@@ -26,8 +34,38 @@ MainWindow::~MainWindow()
     writeSettings();
 }
 
+MdiChild *MainWindow::activeMdiChild()
+{
+    if (QMdiSubWindow *activeSubWindow = mdiArea->activeSubWindow())
+        return qobject_cast<MdiChild *>(activeSubWindow->widget());
+    return 0;
+}
+
+void MainWindow::closeWindow()
+{
+    QMessageBox::StandardButton ret;
+    ret = QMessageBox::warning(this, tr("Attention !!!"),tr("Close current connection ?"),
+                               QMessageBox::Ok | QMessageBox::Cancel);
+    if (ret == QMessageBox::Ok){
+        mdiArea->closeActiveSubWindow();
+        return;
+    }
+    if (ret == QMessageBox::Cancel){
+        return;
+    }
+}
+
 void MainWindow::createActions()
 {
+    closeAct = new QAction(this);
+    closeAct->setShortcut(QKeySequence(Qt::CTRL + Qt::Key_W));
+    closeAct->setStatusTip(tr("close current window and connection"));
+    connect(closeAct, SIGNAL(triggered()),
+            this, SLOT(closeWindow()));
+
+    closeAllAct = new QAction(this);
+    closeAllAct->setStatusTip(tr("close all windows and connections"));
+
     dbConnectionAct = new QAction(this);
     dbConnectionAct->setShortcut(QKeySequence(Qt::CTRL + Qt::Key_N));
     dbConnectionAct->setIcon(QIcon(":/images/disconnect32.png"));
@@ -45,6 +83,10 @@ void MainWindow::createActions()
 
     preferenceAct = new QAction(this);
     connect(preferenceAct, SIGNAL(triggered()), this, SLOT(preference()));
+
+    actionGroup = new QActionGroup(this);
+    separatorAct = new QAction(this);
+    separatorAct->setSeparator(true);
 }
 
 void MainWindow::createDockWidget()
@@ -82,6 +124,7 @@ void MainWindow::createMenu()
     editMenu    = new QMenu(this);
     viewMenu    = new QMenu(this);
     windowMenu  = new QMenu(this);
+    connect(windowMenu, SIGNAL(aboutToShow()), this, SLOT(updateWindowMenu()));
 
     serviceMenu = new QMenu(this);
     serviceMenu ->addAction(preferenceAct);
@@ -115,8 +158,12 @@ void MainWindow::dbConnection()
 
     setIcon();
     QString nameDB = dialog->connectName();
-    if(QSqlDatabase::database(nameDB).isOpen())
-    openMdiChild(nameDB);
+    if(QSqlDatabase::database(nameDB).isOpen()){
+        openMdiChild(nameDB);
+        connWidget->refresh();
+        connect(connWidget, SIGNAL(tableActivated(QString)), this, SLOT(showTable(QString)));
+    }
+    updateWindowMenu();
 //        QMessageBox::warning(this,tr("dbConnection"), nameDB);
 
 }
@@ -178,8 +225,10 @@ void MainWindow::preference()
 void MainWindow::readSettings()
 {
     QSettings settings("QtProject", "MC1");
+    QPoint pos = settings.value("pos", QPoint(200, 200)).toPoint();
     QSize size = settings.value("/size",sizeHint()).toSize();
     if(size.isNull()) resize(650,450);
+    move(pos);
     resize(size);
     language = settings.value("/Settings/language","").toString();
     driverName = settings.value("/Settings/driverName", "").toString();
@@ -192,6 +241,8 @@ void MainWindow::readSettings()
 void MainWindow::retranslate(QString lang)
 {
     aboutQtAct      ->setText(tr("About &Qt"));
+    closeAct        ->setText(tr("Close"));
+    closeAllAct     ->setText(tr("CloseAll"));
     dbConnectionAct ->setText(tr("Connection"));
     exitAct         ->setText(tr("Exit"));
     preferenceAct   ->setText(tr("Preference..."));
@@ -206,6 +257,13 @@ void MainWindow::retranslate(QString lang)
     QString qmPath = directoryOf("translations").absolutePath();
     qtTranslator.load("qt_"+lang, qmPath);
     qApp->installTranslator(&qtTranslator);
+}
+
+void MainWindow::setActiveSubWindow(QWidget *window)
+{
+    if (!window)
+        return;
+    mdiArea->setActiveSubWindow(qobject_cast<QMdiSubWindow *>(window));
 }
 
 void MainWindow::setIcon()
@@ -223,9 +281,54 @@ void MainWindow::setLanguage()
     }
 }
 
+void MainWindow::showTable(const QString &t)
+{
+     QString name = connWidget->currentDatabase().connectionName();
+     openMdiChild(name);
+
+     QSqlTableModel *model = new CustomModel(activeMdiChild(), connWidget->currentDatabase());
+     model->setEditStrategy(QSqlTableModel::OnRowChange);
+     model->setTable(connWidget->currentDatabase().driver()->escapeIdentifier(t, QSqlDriver::TableName));
+     model->select();
+     if (model->lastError().type() != QSqlError::NoError)
+         emit statusMessage(model->lastError().text());
+     activeMdiChild()->setModel(model);
+     activeMdiChild()->setEditTriggers(QAbstractItemView::DoubleClicked|QAbstractItemView::EditKeyPressed);
+     activeMdiChild()->setWindowTitle(name + ": " + t);
+}
+
+void MainWindow::updateMenus()
+{
+    bool hasMdiChild = (activeMdiChild() != 0);
+    closeAct->setEnabled(hasMdiChild);
+    closeAllAct->setEnabled(hasMdiChild);
+}
+
+void MainWindow::updateWindowMenu()
+{
+    windowMenu->clear();
+    windowMenu->addAction(closeAct);
+    windowMenu->addAction(closeAllAct);
+    windowMenu->addSeparator();
+
+    QList<QMdiSubWindow *> windows = mdiArea->subWindowList();
+    for (int i=0; i < windows.size(); ++i){
+        MdiChild *child = qobject_cast<MdiChild *>(windows.at(i)->widget());
+        QString text;
+        text = tr("%1 %2").arg(i+1).arg(child->objectName());
+        QAction *action = windowMenu->addAction(text/*child->objectName()*/);
+        actionGroup->addAction(action);
+        action->setCheckable(true);
+        action->setChecked(child == activeMdiChild());
+        connect(action, SIGNAL(triggered()), windowMapper, SLOT(map()));
+        windowMapper->setMapping(action, windows.at(i));
+    }
+}
+
 void MainWindow::writeSettings()
 {
     QSettings settings("QtProject", "MC1");
+    settings.setValue("pos", pos());
     settings.setValue("/size",size());
     settings.setValue("/Settings/language", language);
     settings.setValue("/Settings/driverName", driverName);

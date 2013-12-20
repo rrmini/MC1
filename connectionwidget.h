@@ -3,6 +3,7 @@
 
 #include <QWidget>
 
+class QSqlDatabase;
 class QTreeWidget;
 class QTreeWidgetItem;
 
@@ -12,12 +13,16 @@ class ConnectionWidget : public QWidget
 public:
     explicit ConnectionWidget(QWidget *parent = 0);
 
+    QSqlDatabase currentDatabase() const;
+
 signals:
     void metaDataRequested(const QString &tableName);
+    void tableActivated(const QString &table);
 
 public slots:
     void refresh();
     void showMetaData();
+    void on_tree_itemActivated(QTreeWidgetItem *item, int);
 
 private:
     void setActive(QTreeWidgetItem *item);
